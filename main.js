@@ -250,13 +250,13 @@ function run()
         return;
     }
     is_pause = false;
-    document.querySelector('#run').innerText = '⏸️'; 
+    document.querySelector('#run').innerHTML = "&#9208;"; 
     update();
   }
   else
   {
     is_pause = true;
-    document.querySelector('#run').innerText = '▶️';
+    document.querySelector('#run').innerHTML = "&#9654;";
   }
 }
 

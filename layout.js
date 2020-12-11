@@ -82,14 +82,7 @@ function EditorComponent(container, state) {
 }
 class Layout extends GoldenLayout {
   constructor(config) {
-    // let layoutConfig = localStorage.getItem(options.configKey);
-    // if (layoutConfig) {
-    //   layoutConfig = JSON.parse(layoutConfig);
-    // } else {
-    //   layoutConfig = options.defaultLayoutConfig;
-    // }
-
-    super(config, $('#layout'));
+    super(config) //, $('#layout'));
 
     this.on('stateChanged', debounceLazy(() => {
       const state = JSON.stringify(this.toConfig());
@@ -176,12 +169,10 @@ function createLayout(code)
 	};
 
 
-	var myLayout = new Layout( config );
+	myLayout = new Layout( config );
 	myLayout.registerComponent('editor', EditorComponent);
 	myLayout.registerComponent('canvas', CanvasComponent);
-	myLayout.registerComponent( 'testComponent', function( container, componentState ){
-	    container.getElement().html( '<h2>' + componentState.label + '</h2>' );
-	});
+
 	myLayout.init();
 
 	$(window).resize(function () {
