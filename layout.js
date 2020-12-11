@@ -50,7 +50,10 @@ function CanvasComponent(container, state)
 
 function EditorComponent(container, state) {
   editor = ace.edit(container.getElement()[0]);
-  editor.session.setMode('ace/mode/javascript');
+  if(is_python)
+    editor.session.setMode('ace/mode/python');
+  else
+    editor.session.setMode('ace/mode/javascript');
   editor.setKeyboardHandler('ace/keyboard/sublime');
   editor.setOption('fontSize',);
   editor.setValue(state.value || '');

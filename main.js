@@ -20,6 +20,12 @@ var scale = 5
 var timeStep = 10
 var numTime = 0; // robot time
 
+var code;
+if( is_python )
+  code = code_python
+else
+  code = code_js
+
 // state
 var cleaned_blocks = []
 var robot;
@@ -57,9 +63,12 @@ function reset(){
     // might still fail, check for errors.
     try {
       eval( used_code );
-      robot = create();
+      if( is_python )
+        robot = new PyRobot();
+      else
+        robot = create();
     } catch(error) {
-      alert("can't run because you have errors:\n" + + error.stack);
+      process_error(error)
       return false;
     }
   }
@@ -85,6 +94,30 @@ function codeChanged(str)
   document.querySelector('#compile').innerText = 'recompile';
 }
 
+function process_error(error)
+{
+  var s = error.stack;
+  if( is_python )
+  {
+    var start = s.search('File "<unknown')
+    if(start == -1)
+      start = Math.max(0, s.search('File "<exec'))
+    var stop = s.search("at _hiwire_throw_error")
+    if(stop == -1) stop = s.length
+    s = s.substr(start, stop-start)
+  }
+  else
+  {
+    var start = 0;
+    var stop = s.search("at create \\(my_robot_script")
+    if(stop == -1) stop = s.length
+    s = s.substr(start, stop-start)
+  }
+  s = "can't run because you have errors:\n\n" + s
+  console.log(s)
+  alert(s);
+}
+
 // try to compile the code
 function compile()
 {
@@ -107,9 +140,19 @@ function compile()
     return false;
   }
 
-// check if we should validate code
-// maybe check https://github.com/AlexNisnevich/untrusted/blob/a6ed68657afdb1b8ca47d601ffb425b2c84dd4f6/scripts/validate.js
-  annotated_code = code + `
+  // check if we should validate code
+  // maybe check https://github.com/AlexNisnevich/untrusted/blob/a6ed68657afdb1b8ca47d601ffb425b2c84dd4f6/scripts/validate.js 
+  // might still fail, check for errors.
+  try {
+    if( is_python )
+    {
+      pyodide.runPython(code);
+      robot = new PyRobot();
+      used_code = code;
+    }
+    else
+    {
+      annotated_code = code + `
 //-----------------------------------------
 // auto generated code. do not modify
 function create()
@@ -118,16 +161,15 @@ function create()
 }
 //# sourceURL=my_robot_script.js
 `
+       eval( annotated_code );
+       robot = create();
+       used_code = annotated_code;
+    }
 
-  // might still fail, check for errors.
-  try {
-    eval( annotated_code );
-    robot = create();
   } catch(error) {
-    alert("can't run because you have errors:\n" + + error.stack);
+    process_error(error)
     return false;
-  }
-  used_code = annotated_code;
+  }  
   setCodeInfo('code compiled!');
   return true;
 }
@@ -169,7 +211,7 @@ function draw(ctx)
   }
   else
   {
-    console.log("same pos " + robot_pos)
+    //console.log("same pos " + robot_pos)
   }
   lastpos = new Position(robot_pos);
 }
@@ -187,7 +229,7 @@ function update(timeMS = 0) {
       numTime = numTime+1;
       move(robot, map, robot_pos);
     } catch(error) {
-      alert("can't run because you have errors:\n" + error.stack);
+      process_error(error)
       run(); // pause
       return;
     }  
